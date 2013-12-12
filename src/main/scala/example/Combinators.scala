@@ -41,15 +41,16 @@ case class PasswordField(numChars: Int) extends Element[String]
 
 object Form {
   def render[A](f: Form[A], initial: A, onChange: A => Unit) : Markup = f match {
-    case Labeled(l, e) => static(tr()(td()(text(l)), td()(e match {
+    case Labeled(l, e) => static(row(text(l), e match {
       case TextField(n) => textInput(n, initial, onChange)
       case PasswordField(n) => passwordInput(n, initial, onChange)
-    })))
+    }))
     case Pair(a, b) => renderPair(a, b, initial, onChange)
     case Listener(l, a) => render(a, initial, (n : A) => {l(n); onChange(n)})
     case Map(i, v, a) => renderMap(i, v, a, initial, onChange)
     case Note(a, html) => renderNote(a, html, initial, onChange)
-}
+  }
+  def row(e: Html*) = tr()(e.map(td()(_)) : _*)
   def renderMap[A, B](i: B => A, v: A => B, a: Form[A], initial: B, onChange: B => Unit) =
     render(a, i(initial), onChange compose v)
   def renderPair[A, B](a: Form[A], b: Form[B], initial: (A, B), onChange: ((A, B)) => Unit) = {
@@ -58,13 +59,15 @@ object Form {
       render(a, initial._1, (n : A) => {v = (n, v._2); onChange(v)}),
       render(b, initial._2, (n : B) => {v = (v._1, n); onChange(v)}))
   }
-  def renderNote[A](a: Form[A], html: A => Html, initial: A, onChange: A => Unit) =
+  def renderNote[A](a: Form[A], html: A => Html, initial: A, onChange: A => Unit) = {
+    def note(a: A) = row(text(""), html(a))
     Markup.withOnDiff(onDiff => Markup.div()(
       render(a, initial, (n:A) => {
-          onDiff(HtmlDiff.atChild(HtmlDiff(Some(html(n)), Nil), 1, 2))
+          onDiff(HtmlDiff.atChild(HtmlDiff(Some(note(n)), Nil), 1, 2))
           onChange(n)
         }),
-      static(html(initial))))
+      static(note(initial))))
+  }
 
   implicit class Same[A](f: Form[(A, A)]) {
     def same(default: A) = Map[(A, A), Option[A]](
@@ -92,7 +95,7 @@ object Combinators {
           ((u.name, u.password), Some(u.email))},
         {case ((name, pw), email) => email.map(User(name, pw,_))})
 
-  def passwordStrength(p: String) = text("Password strength: " +
+  def passwordStrength(p: String) = text(
     List((p.length < 8) -> "Too short",
       (p.toSet.size < 5) -> "Weak",
       (p.toSet.size < 7) -> "Fair",

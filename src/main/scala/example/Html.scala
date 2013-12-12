@@ -47,8 +47,6 @@ object Html {
   def textInput(size: Int, value: String, onChange: String => Unit) = TextInput(false, size, value, onChange)
   def passwordInput(size: Int, value: String, onChange: String => Unit) = TextInput(true, size, value, onChange)
 
-  def test() = g.console.log("hey")
-
   def render(h: Html) : js.Dynamic = h match {
     case text(s) => doc.createTextNode(s)
     case Div(c) => elem("div", Nil, c.map(render(_)))
