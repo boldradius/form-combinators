@@ -21,6 +21,7 @@ import scala.scalajs.js
 import js.Dynamic.{ global => g }
 import Html._
 import Markup.{static, addMarkup}
+import js.annotation.JSExport
 
 sealed trait Form[A] {
   def +[B](b: Form[B]) = Pair(this, b)
@@ -82,6 +83,7 @@ object Form {
 
 case class User(name: String, password:String, email: String)
 
+@JSExport
 object Combinators {
   val form : Form[Option[User]] =
     ((Labeled("Username", TextField(20)) +
@@ -108,7 +110,7 @@ object Combinators {
       .note(v => div()(br(), text("Current form value: " + v.toString)))
       .render(None)
   )
-
+  @JSExport
   def main() : Unit = {
     val p = addMarkup(doc.getElementById("playground"), page)
   }
